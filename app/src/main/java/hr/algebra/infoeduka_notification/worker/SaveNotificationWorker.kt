@@ -2,22 +2,18 @@ package hr.algebra.infoeduka_notification.worker
 
 import android.content.Context
 import android.util.Log
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import hr.algebra.infoeduka_notification.data.dao.NotificationDao
 import hr.algebra.infoeduka_notification.data.model.Notification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@HiltWorker
-class SaveNotificationWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
-    @Assisted workerParams: WorkerParameters,
+class SaveNotificationWorker(
+    appContext: Context,
+    workerParams: WorkerParameters,
     private val notificationDao: NotificationDao
 ) : CoroutineWorker(appContext, workerParams) {
 

@@ -7,6 +7,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import hr.algebra.infoeduka_notification.data.dao.NotificationDao
+import hr.algebra.infoeduka_notification.worker.SaveNotificationWorkerFactory
 import javax.inject.Singleton
 
 @Module
@@ -18,4 +20,10 @@ object WorkerModule {
     fun provideWorkManager(
         @ApplicationContext context: Context
     ): WorkManager = WorkManager.getInstance(context)
+
+    @Provides
+    @Singleton
+    fun provideSaveNotificationWorkerFactory(
+        notificationDao: NotificationDao
+    ): SaveNotificationWorkerFactory = SaveNotificationWorkerFactory(notificationDao)
 }
