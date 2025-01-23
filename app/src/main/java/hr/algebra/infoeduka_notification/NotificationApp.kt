@@ -10,6 +10,11 @@ import dagger.hilt.android.HiltAndroidApp
 @HiltAndroidApp
 class NotificationApp : Application() {
 
+    companion object {
+        const val CHANNEL_ID = "fcm_notification_channel"
+        const val SERVICE_CHANNEL_ID = "fcm_service_channel"
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -17,6 +22,7 @@ class NotificationApp : Application() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // User notification channel
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "FCM Notifications",
@@ -26,12 +32,19 @@ class NotificationApp : Application() {
                 enableVibration(true)
             }
 
+            // Service notification channel
+            val serviceChannel = NotificationChannel(
+                SERVICE_CHANNEL_ID,
+                "Background Service",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Background notification processing"
+                setShowBadge(false)
+            }
+
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(serviceChannel)
         }
-    }
-
-    companion object {
-        const val CHANNEL_ID = "fcm_notification_channel"
     }
 }
