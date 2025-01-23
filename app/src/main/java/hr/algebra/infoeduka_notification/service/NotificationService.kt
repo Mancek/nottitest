@@ -13,9 +13,7 @@ import hr.algebra.infoeduka_notification.NotificationApp.Companion.CHANNEL_ID
 import hr.algebra.infoeduka_notification.R
 import hr.algebra.infoeduka_notification.data.dao.NotificationDao
 import hr.algebra.infoeduka_notification.data.model.Notification
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
@@ -26,20 +24,6 @@ class NotificationService : FirebaseMessagingService() {
 
     @Inject
     lateinit var notificationDao: NotificationDao
-
-    private val job = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.IO + job)
-
-    override fun onCreate() {
-        super.onCreate()
-        Log.d(TAG, "NotificationService created")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
-        Log.d(TAG, "NotificationService destroyed")
-    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -57,8 +41,8 @@ class NotificationService : FirebaseMessagingService() {
             timestamp = Instant.now().epochSecond
         )
 
-        // Save notification directly using coroutine
-        scope.launch {
+        // Save notification using GlobalScope
+        GlobalScope.launch {
             try {
                 notificationDao.insertNotification(notification)
                 Log.d(TAG, "Notification saved successfully")
