@@ -16,6 +16,7 @@ import hr.algebra.infoeduka_notification.NotificationApp.Companion.CHANNEL_ID
 import hr.algebra.infoeduka_notification.R
 import hr.algebra.infoeduka_notification.data.model.Notification
 import hr.algebra.infoeduka_notification.worker.SaveNotificationWorker
+import com.google.gson.Gson
 import java.time.Instant
 import kotlin.random.Random
 
@@ -37,11 +38,16 @@ class NotificationService : FirebaseMessagingService() {
             data = message.data
         )
 
+        // Convert notification data map to JSON
+        val gson = Gson()
+        val dataJson = gson.toJson(notification.data)
+
         // Schedule work to save notification
         val workData = Data.Builder()
             .putString(SaveNotificationWorker.KEY_TITLE, notification.title)
             .putString(SaveNotificationWorker.KEY_MESSAGE, notification.message)
             .putLong(SaveNotificationWorker.KEY_TIMESTAMP, Instant.now().epochSecond)
+            .putString(SaveNotificationWorker.KEY_DATA, dataJson)
             .build()
 
         val saveRequest = OneTimeWorkRequestBuilder<SaveNotificationWorker>()
