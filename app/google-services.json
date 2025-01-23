@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "699909152420",
+    "project_id": "infoeduka-notification",
+    "storage_bucket": "infoeduka-notification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:699909152420:android:fb94ebce23b6c39ea59031",
+        "android_client_info": {
+          "package_name": "hr.algebra.infoeduka_notification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgUj1nKEjsMRv1xZ5wYpc7U0lllNM-Y_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
