@@ -51,79 +51,79 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
-@Composable
-fun NotificationList(viewModel: NotificationViewModel) {
-    val notifications by viewModel.notifications.collectAsState(initial = emptyList())
+    @Composable
+    fun NotificationList(viewModel: NotificationViewModel) {
+        val notifications by viewModel.notifications.collectAsState(initial = emptyList())
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        item {
-            Text(
-                text = "Notification History",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            item {
+                Text(
+                    text = "Notification History",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
 
-        items(notifications) { notification ->
-            NotificationItem(notification)
+            items(notifications) { notification ->
+                NotificationItem(notification)
+            }
         }
     }
-}
 
-@Composable
-fun NotificationItem(notification: Notification) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-    ) {
-        Column(
+    @Composable
+    fun NotificationItem(notification: Notification) {
+        Card(
             modifier = Modifier
-                .padding(16.dp)
                 .fillMaxWidth()
+                .padding(vertical = 8.dp),
         ) {
-            Text(
-                text = notification.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = notification.message,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = formatTimestamp(notification.timestamp),
-                style = MaterialTheme.typography.bodySmall
-            )
-            if (notification.data.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = notification.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = notification.message,
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-                notification.data.forEach { (key, value) ->
-                    Text(
-                        text = "$key: $value",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                Text(
+                    text = formatTimestamp(notification.timestamp),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                if (notification.data.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    notification.data.forEach { (key, value) ->
+                        Text(
+                            text = "$key: $value",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
         }
     }
-}
 
-private fun formatTimestamp(timestamp: Long): String {
-    return try {
-        val instant = Instant.ofEpochSecond(timestamp)
-        val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
-            .withZone(ZoneId.systemDefault())
-        formatter.format(instant)
-    } catch (e: Exception) {
-        "Invalid date"
+    private fun formatTimestamp(timestamp: Long): String {
+        return try {
+            val instant = Instant.ofEpochSecond(timestamp)
+            val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
+                .withZone(ZoneId.systemDefault())
+            formatter.format(instant)
+        } catch (e: Exception) {
+            "Invalid date"
+        }
     }
 }
-}
+
