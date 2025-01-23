@@ -5,21 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
-import hr.algebra.infoeduka_notification.worker.SaveNotificationWorkerFactory
-import javax.inject.Inject
 
 @HiltAndroidApp
-class NotificationApp : Application(), Configuration.Provider {
-
-    @Inject
-    lateinit var workerFactory: SaveNotificationWorkerFactory
-
-    override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+class NotificationApp : Application() {
 
     companion object {
         const val CHANNEL_ID = "fcm_notification_channel"
@@ -43,19 +32,8 @@ class NotificationApp : Application(), Configuration.Provider {
                 enableVibration(true)
             }
 
-            // Service notification channel
-            val serviceChannel = NotificationChannel(
-                SERVICE_CHANNEL_ID,
-                "Background Service",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Background notification processing"
-                setShowBadge(false)
-            }
-
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
-            notificationManager.createNotificationChannel(serviceChannel)
         }
     }
 }

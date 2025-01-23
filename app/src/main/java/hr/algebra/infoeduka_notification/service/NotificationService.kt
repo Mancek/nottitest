@@ -5,24 +5,41 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import hr.algebra.infoeduka_notification.MainActivity
 import hr.algebra.infoeduka_notification.NotificationApp.Companion.CHANNEL_ID
 import hr.algebra.infoeduka_notification.R
+import hr.algebra.infoeduka_notification.data.dao.NotificationDao
 import hr.algebra.infoeduka_notification.data.model.Notification
-import hr.algebra.infoeduka_notification.worker.SaveNotificationWorker
-import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.time.Instant
+import javax.inject.Inject
 import kotlin.random.Random
 
 @AndroidEntryPoint
 class NotificationService : FirebaseMessagingService() {
 
+    @Inject
+    lateinit var notificationDao: NotificationDao
+
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.IO + job)
+
+    override fun onCreate() {
+        super.onCreate()
+        Log.d(TAG, "NotificationService created")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+        Log.d(TAG, "NotificationService destroyed")
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -31,31 +48,24 @@ class NotificationService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
+        Log.d(TAG, "Message received")
         
         val notification = Notification(
             title = message.notification?.title ?: "",
             message = message.notification?.body ?: "",
-            data = message.data
+            data = message.data,
+            timestamp = Instant.now().epochSecond
         )
 
-        // Convert notification data map to JSON
-        val gson = Gson()
-        val dataJson = gson.toJson(notification.data)
-
-        // Schedule work to save notification
-        val workData = Data.Builder()
-            .putString(SaveNotificationWorker.KEY_TITLE, notification.title)
-            .putString(SaveNotificationWorker.KEY_MESSAGE, notification.message)
-            .putLong(SaveNotificationWorker.KEY_TIMESTAMP, Instant.now().epochSecond)
-            .putString(SaveNotificationWorker.KEY_DATA, dataJson)
-            .build()
-
-        val saveRequest = OneTimeWorkRequestBuilder<SaveNotificationWorker>()
-            .setInputData(workData)
-            .build()
-
-        WorkManager.getInstance(this)
-            .enqueue(saveRequest)
+        // Save notification directly using coroutine
+        scope.launch {
+            try {
+                notificationDao.insertNotification(notification)
+                Log.d(TAG, "Notification saved successfully")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving notification", e)
+            }
+        }
 
         // Show notification to user
         showNotification(notification)
