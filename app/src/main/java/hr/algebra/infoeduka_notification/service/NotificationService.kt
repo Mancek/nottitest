@@ -5,32 +5,23 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import hr.algebra.infoeduka_notification.MainActivity
 import hr.algebra.infoeduka_notification.NotificationApp.Companion.CHANNEL_ID
-import hr.algebra.infoeduka_notification.NotificationApp.Companion.SERVICE_CHANNEL_ID
 import hr.algebra.infoeduka_notification.R
-import hr.algebra.infoeduka_notification.data.dao.NotificationDao
 import hr.algebra.infoeduka_notification.data.model.Notification
-import kotlinx.coroutines.*
-import javax.inject.Inject
+import hr.algebra.infoeduka_notification.worker.SaveNotificationWorker
+import java.time.Instant
 import kotlin.random.Random
 
 @AndroidEntryPoint
 class NotificationService : FirebaseMessagingService() {
 
-    private val serviceJob = SupervisorJob()
-    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
-
-    @Inject
-    lateinit var notificationDao: NotificationDao
-
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceJob.cancel()
-    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -46,35 +37,19 @@ class NotificationService : FirebaseMessagingService() {
             data = message.data
         )
 
-        // Start foreground service to ensure operation completes
-        val serviceNotification = NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
-            .setContentTitle("Processing Notification")
-            .setContentText("Saving notification data...")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+        // Schedule work to save notification
+        val workData = Data.Builder()
+            .putString(SaveNotificationWorker.KEY_TITLE, notification.title)
+            .putString(SaveNotificationWorker.KEY_MESSAGE, notification.message)
+            .putLong(SaveNotificationWorker.KEY_TIMESTAMP, Instant.now().epochSecond)
             .build()
 
-        startForeground(FOREGROUND_SERVICE_ID, serviceNotification)
+        val saveRequest = OneTimeWorkRequestBuilder<SaveNotificationWorker>()
+            .setInputData(workData)
+            .build()
 
-        // Save notification in background with reliable scope
-        // Use supervisorScope to prevent child coroutine failures from cancelling the parent
-        serviceScope.launch {
-            supervisorScope {
-                try {
-                    withContext(Dispatchers.IO) {
-                        notificationDao.insertNotification(notification)
-                    }
-                    Log.d(TAG, "Notification saved successfully")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error saving notification", e)
-                } finally {
-                    // Always stop foreground service after completion
-                    withContext(Dispatchers.Main) {
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                    }
-                }
-            }
-        }
+        WorkManager.getInstance(this)
+            .enqueue(saveRequest)
 
         // Show notification to user
         showNotification(notification)
@@ -104,6 +79,5 @@ class NotificationService : FirebaseMessagingService() {
 
     companion object {
         private const val TAG = "NotificationService"
-        private const val FOREGROUND_SERVICE_ID = 123
     }
 }
